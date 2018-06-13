@@ -25,6 +25,15 @@ var ErrNoDarwin64Build = errors.New("brew tap requires one darwin amd64 build")
 // ErrTooManyDarwin64Builds when there are too many builds for darwin_amd64
 var ErrTooManyDarwin64Builds = errors.New("brew tap requires at most one darwin amd64 build")
 
+const DefaultURLTemplate = "{{ .DownloadURL }}/{{ .Repo.Owner }}/{{ .Repo.Name }}/releases/download/{{ .Tag }}/{{ .File }}"
+
+type urlTemplateData struct {
+	DownloadURL string
+	Repo        config.Repo
+	Tag         string
+	File        string
+}
+
 // Pipe for brew deployment
 type Pipe struct{}
 
@@ -65,6 +74,10 @@ func (Pipe) Default(ctx *context.Context) error {
 	}
 	if ctx.Config.Brew.Name == "" {
 		ctx.Config.Brew.Name = ctx.Config.ProjectName
+	}
+
+	if ctx.Config.Brew.URLTemplate == "" {
+		ctx.Config.Brew.URLTemplate = DefaultURLTemplate
 	}
 	return nil
 }
@@ -158,14 +171,36 @@ func doBuildFormula(data templateData) (out bytes.Buffer, err error) {
 	return
 }
 
+func buildURLFor(ctx *context.Context, data urlTemplateData) (string, error) {
+	tmpl, err := template.New("url").Parse(ctx.Config.Brew.URLTemplate)
+	if err != nil {
+		return "", err
+	}
+
+	var out bytes.Buffer
+	err = tmpl.Execute(&out, data)
+	return out.String(), err
+}
+
 func dataFor(ctx *context.Context, client client.Client, artifact artifact.Artifact) (result templateData, err error) {
 	sum, err := checksum.SHA256(artifact.Path)
 	if err != nil {
 		return
 	}
 	var cfg = ctx.Config.Brew
+
+	url, err := buildURLFor(ctx, urlTemplateData{
+		DownloadURL: ctx.Config.GitHubURLs.Download,
+		File:        artifact.Name,
+		Tag:         ctx.Git.CurrentTag,
+		Repo:        ctx.Config.Release.GitHub,
+	})
+	if err != nil {
+		return
+	}
 	return templateData{
 		Name:              formulaNameFor(ctx.Config.Brew.Name),
+		URL:               url,
 		DownloadURL:       ctx.Config.GitHubURLs.Download,
 		Desc:              cfg.Description,
 		Homepage:          cfg.Homepage,

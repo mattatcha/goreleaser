@@ -50,6 +50,7 @@ type Homebrew struct {
 	Homepage          string       `yaml:",omitempty"`
 	SkipUpload        bool         `yaml:"skip_upload,omitempty"`
 	DownloadStrategy  string       `yaml:"download_strategy,omitempty"`
+	URLTemplate       string       `yaml:"url_template,omitempty"`
 	SourceTarball     string       `yaml:"-"`
 }
 

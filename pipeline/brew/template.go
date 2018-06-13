@@ -6,6 +6,7 @@ type templateData struct {
 	Name              string
 	Desc              string
 	Homepage          string
+	URL               string
 	DownloadURL       string
 	Repo              config.Repo // FIXME: will not work for anything but github right now.
 	Tag               string
@@ -29,7 +30,7 @@ const formulaTemplate = `class {{ .Name }} < Formula
   url "{{ .DownloadURL }}/{{ .Repo.Owner }}/{{ .Repo.Name }}/archive/{{ .Tag }}.tar.gz"
   head "https://github.com/{{ .Repo.Owner }}/{{ .Repo.Name }}.git"
   {{- else -}}
-  url "{{ .DownloadURL }}/{{ .Repo.Owner }}/{{ .Repo.Name }}/releases/download/{{ .Tag }}/{{ .File }}"
+  url "{{ .URL }}"
   {{- if .DownloadStrategy }}, :using => {{ .DownloadStrategy }}{{- end }}
   {{- end }}
   version "{{ .Version }}"

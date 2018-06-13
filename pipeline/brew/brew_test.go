@@ -37,6 +37,7 @@ func TestSimpleName(t *testing.T) {
 var defaultTemplateData = templateData{
 	Desc:        "Some desc",
 	Homepage:    "https://google.com",
+	URL:         "https://github.com/caarlos0/test/releases/download/v0.1.3/test_Darwin_x86_64.tar.gz",
 	DownloadURL: "https://github.com",
 	Name:        "Test",
 	Repo: config.Repo{
@@ -107,6 +108,9 @@ func TestRunPipe(t *testing.T) {
 		"custom_download_strategy": func(ctx *context.Context) {
 			ctx.Config.Brew.DownloadStrategy = "GitHubPrivateRepositoryReleaseDownloadStrategy"
 		},
+		"custom_url_template": func(ctx *context.Context) {
+			ctx.Config.Brew.URLTemplate = "https://s3.amazonaws.com/some-bucket/{{.Repo.Name}}/releases/{{.Tag}}/{{.File}}"
+		},
 		"build_from_source": func(ctx *context.Context) {
 			ctx.Config.Brew.BuildDependencies = []string{"go"}
 		},
@@ -136,7 +140,8 @@ func TestRunPipe(t *testing.T) {
 						},
 					},
 					Brew: config.Homebrew{
-						Name: name,
+						Name:        name,
+						URLTemplate: DefaultURLTemplate,
 						GitHub: config.Repo{
 							Owner: "test",
 							Name:  "test",
